@@ -1,0 +1,541 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'providers/panchang_provider.dart';
+import 'chart/chart_input_screen.dart';
+import 'package:app/core/utils.dart';
+import 'package:intl/intl.dart';
+import 'widgets/vedic_background.dart';
+import 'widgets/vedic_card.dart';
+import 'providers/muhurta_provider.dart';
+import 'widgets/muhurta_content.dart';
+import 'widgets/chart_input_widget.dart';
+import 'widgets/unified_astrology_widget.dart';
+import 'providers/dasa_provider.dart';
+import 'settings/settings_screen.dart';
+import 'providers/settings_provider.dart';
+import 'widgets/location_search_delegate.dart';
+import '../data/models/muhurta_model.dart';
+import 'chart/chart_input_screen.dart'; // Deprecated but might be referenced
+
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+  // Removed print from constructor as it can't have body if const. 
+  // But wait, I need to remove const to add body.
+  // Actually, I'll just keep it const and rely on initState print.
+  // If initState isn't called, then the widget isn't being mounted.
+
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _currentIndex = 0;
+
+  bool _showChartResults = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PanchangProvider>().loadPanchang().then((_) {
+        // After panchang, load muhurta for the same location
+        final p = context.read<PanchangProvider>().panchang;
+        if (p != null && mounted) {
+           context.read<MuhurtaProvider>().loadMuhurta(p.latitude ?? 0, p.longitude ?? 0);
+        }
+      });
+    });
+  }
+
+  Widget _buildBody() {
+    switch (_currentIndex) {
+      case 0:
+        return const PanchangView();
+      case 1:
+        return _showChartResults
+            ? UnifiedAstrologyWidget(
+                onNewChart: () => setState(() => _showChartResults = false),
+              )
+            : ChartInputWidget(
+                onGenerate: () => setState(() => _showChartResults = true),
+              );
+      case 2:
+        return const MuhurtaViewWrapper();
+      default:
+        return const PanchangView();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Use context.watch to rebuild when settings change
+    final settings = context.watch<SettingsProvider>();
+    
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(settings.getString('app_title')),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: _buildBody(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _currentIndex,
+        onTap: (index) {
+          if (index == 2) {
+             // Muhurta - try to load data
+             final panchang = context.read<PanchangProvider>().panchang;
+             if (panchang != null && panchang.latitude != null && panchang.longitude != null) {
+                context.read<MuhurtaProvider>().loadMuhurta(panchang.latitude!, panchang.longitude!);
+             } else {
+                 ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(settings.getString('location_not_available_for_muhurta'))),
+                 );
+             }
+          }
+          setState(() {
+            _currentIndex = index;
+            if (index != 1) {
+              _showChartResults = false; // Reset chart view when moving away? Optional
+            }
+          });
+        },
+        selectedItemColor: Theme.of(context).primaryColor,
+        unselectedItemColor: Colors.grey,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        type: BottomNavigationBarType.fixed,
+        items: [
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.calendar_today),
+            label: settings.getString('nav_panchang'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.auto_awesome),
+            label: settings.getString('nav_chart'),
+          ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.access_time),
+            label: settings.getString('nav_muhurta'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MuhurtaViewWrapper extends StatelessWidget {
+  const MuhurtaViewWrapper({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MuhurtaContent();
+  }
+}
+
+class PanchangView extends StatelessWidget {
+  const PanchangView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    return Scaffold(
+      body: VedicBackground(
+        child: Consumer<PanchangProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  color: Theme.of(context).primaryColor,
+                ),
+              );
+            }
+
+            if (provider.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: ${provider.error}'),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () => provider.loadPanchang(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            final panchang = provider.panchang;
+            final settings = context.read<SettingsProvider>();
+            if (panchang == null) {
+              return Center(child: Text(settings.getString('no_data')));
+            }
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildHeader(context, panchang),
+                  const SizedBox(height: 24),
+                  Column(
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildPanchangBadge(context, settings.getString('tithi'), 
+                              panchang.tithi?.number != null 
+                                ? PanchangUtils.getLocalizedTithiName(context, panchang.tithi!.number!)
+                                : panchang.tithi?.name, 
+                              PanchangUtils.formatTime(panchang.tithi?.endTime)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildPanchangBadge(context, settings.getString('vara'), panchang.vara?.name, PanchangUtils.formatTime(panchang.vara?.endTime)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildPanchangBadge(context, settings.getString('nakshatra'), panchang.nakshatra?.name, PanchangUtils.formatTime(panchang.nakshatra?.endTime)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildPanchangBadge(context, settings.getString('yoga'), panchang.yoga?.name, PanchangUtils.formatTime(panchang.yoga?.endTime)),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildPanchangBadge(context, settings.getString('karana'), panchang.karana?.name, PanchangUtils.formatTime(panchang.karana?.endTime)),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildCurrentChoghadiya(context),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                  _buildSunMoonCard(context, panchang),
+                  const SizedBox(height: 24),
+                  // Removed bottom _buildCurrentChoghadiya
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentChoghadiya(BuildContext context) {
+    final muhurta = context.watch<MuhurtaProvider>().muhurta;
+    final settings = context.watch<SettingsProvider>();
+
+    if (muhurta == null) {
+      // Return a placeholder or empty if no data yet. 
+      // To match alignment with other cards, we can return an empty card or sizebox.
+      return const SizedBox(); 
+    }
+    
+    // Find current choghadiya
+    final now = DateTime.now(); // Local time
+    final all = [...?muhurta.dayChoghadiya, ...?muhurta.nightChoghadiya];
+    
+    Choghadiya? current;
+    for (final c in all) {
+      if (c.startTime != null && c.endTime != null) {
+         try {
+           final start = DateTime.parse(c.startTime!).toLocal();
+           final end = DateTime.parse(c.endTime!).toLocal();
+
+          //  print("CHOGHADIYA CHECK: ${c.name} (${c.nature}) Start: $start End: $end Now: $now");
+           
+           if (now.isAfter(start) && now.isBefore(end)) {
+             current = c;
+             break;
+           }
+         } catch (e) {
+           print("CHOGHADIYA PARSE ERROR: $e");
+         }
+      }
+    }
+
+    if (current == null) return const SizedBox();
+
+    Color bgColor;
+    // Map localized nature strings or raw API values to English equivalents for color logic
+    String natureKey = current.nature?.toLowerCase() ?? 'neutral';
+
+    // List of known 'GOOD' natures across supported languages
+    const goodNatures = [
+      'good', 'shubh', 'labh', 'amrit', 
+      'शुभ', 'लाभ', 'अमृत', // Hindi
+      'శుభం', 'లాభం', 'అమృతం', // Telugu (Exact API strings)
+      'शुभम्', 'लाभः', 'अमृतम्', // Sanskrit
+      'நல்லது', 'சுபம்', 'லாபம்', 'அமிர்தம்', // Tamil
+      'ಶುಭ', 'ಲಾಭ', 'ಅಮೃತ', // Kannada
+    ];
+    
+    // List of known 'BAD' natures
+    const badNatures = [
+      'bad', 'rog', 'udveg', 'kaal', 'kal', 
+      'अशुभ', 'रोग', 'उद्वेग', 'काल', // Hindi
+      'అశుభం', 'రోగం', 'ఉద్వేగం', 'కాలం', // Telugu (Exact API strings)
+      'अशुभम्', 'रोगः', 'उद्वेगः', 'कालः', // Sanskrit
+      'கெட்டது', 'ரோகம்', 'உத்வேகம்', 'காலம்', // Tamil
+      'ಅಶುಭ', 'ರೋಗ', 'ಉದ್ವೇಗ', 'ಕಾಲ', // Kannada
+    ];
+
+    if (goodNatures.contains(natureKey)) {
+      bgColor = Colors.green.shade100;
+    } else if (badNatures.contains(natureKey)) {
+      bgColor = Colors.red.shade100;
+    } else {
+      bgColor = Colors.grey.shade200;
+    }
+
+    return VedicCard(
+      backgroundColor: bgColor,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+           Text(settings.getString('choghadiya'), style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+           const SizedBox(height: 8),
+           Text(settings.getString(current.name?.toLowerCase() ?? '') ?? current.name ?? '', 
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2)),
+           
+           // Optional: Show nature color indicator or text
+           // Text(settings.getString(current.nature?.toLowerCase() ?? '') ?? current.nature ?? '',
+           //     style: TextStyle(color: (current.nature?.toLowerCase() == 'good' || current.nature?.toLowerCase() == 'shubh') ? Colors.green : Colors.red, fontSize: 12)),
+               
+           const SizedBox(height: 8),
+           Text('${PanchangUtils.formatTime(current.startTime)} - ${PanchangUtils.formatTime(current.endTime)}', 
+             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF8B0000))),
+        ],
+      )
+    );
+  }
+
+  Widget _buildPanchangBadge(BuildContext context, String title, String? value, String? endTime) {
+    final settings = context.read<SettingsProvider>();
+    return VedicCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(value ?? settings.getString('unknown'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2)),
+          if (endTime != null) ...[
+            const SizedBox(height: 8),
+            Text('${settings.getString('ends')}: $endTime', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF8B0000))),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSunMoonCard(BuildContext context, dynamic panchang) {
+    final settings = context.read<SettingsProvider>();
+    return VedicCard(
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTimeItem(context, Icons.wb_sunny, settings.getString('sunrise'), panchang.sunrise),
+              _buildTimeItem(context, Icons.wb_twilight, settings.getString('sunset'), panchang.sunset),
+            ],
+          ),
+          const Divider(height: 24, color: Color(0x40FFD700)), // Subtle gold divider
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildTimeItem(context, Icons.nightlight_round, settings.getString('moonrise'), panchang.moonrise),
+              _buildTimeItem(context, Icons.bedtime, settings.getString('moonset'), panchang.moonset),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTimeItem(BuildContext context, IconData icon, String label, String? time) {
+    return Column(
+      children: [
+        Icon(icon, color: Theme.of(context).primaryColor),
+        const SizedBox(height: 4),
+        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF8B0000))),
+        Text(time ?? '--:--', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
+      ],
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, dynamic panchang) {
+    final settings = context.read<SettingsProvider>();
+    // Parse date if available
+    String dateStr = 'Today';
+    if (panchang.dateTime != null) {
+      try {
+        final dt = DateTime.parse(panchang.dateTime!);
+        dateStr = DateFormat('EEE, dd MMM yyyy').format(dt);
+      } catch (e) {
+        dateStr = panchang.dateTime!;
+      }
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          settings.getString('todays_panchang'),
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).primaryColor,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          dateStr,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
+        ),
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () => _showLocationDialog(context),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Theme.of(context).primaryColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.location_on, size: 16, color: Theme.of(context).primaryColor),
+                const SizedBox(width: 8),
+                Text(panchang.placeName ?? settings.getString('unknown'), style: Theme.of(context).textTheme.bodyLarge?.copyWith(decoration: TextDecoration.underline)),
+                const SizedBox(width: 4),
+                Icon(Icons.edit, size: 14, color: Theme.of(context).primaryColor),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showLocationDialog(BuildContext context) {
+    final settings = context.read<SettingsProvider>();
+    final placeController = TextEditingController();
+    final latController = TextEditingController();
+    final lngController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(settings.getString('change_location')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+             SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  context.read<PanchangProvider>().useCurrentLocation();
+                  Navigator.pop(context);
+                },
+                icon: const Icon(Icons.my_location),
+                label: Text(settings.getString('use_current_location')),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            const SizedBox(height: 16),
+            const Divider(),
+            const SizedBox(height: 16),
+            // Place Name with Search Icon
+            TextField(
+              controller: placeController,
+              readOnly: true,
+              onTap: () async {
+                final city = await showSearch(
+                  context: context,
+                  delegate: LocationSearchDelegate(),
+                );
+                if (city != null) {
+                  placeController.text = city.name;
+                  latController.text = city.latitude.toString();
+                  lngController.text = city.longitude.toString();
+                }
+              },
+              decoration: InputDecoration(
+                labelText: settings.getString('place_name'),
+                prefixIcon: const Icon(Icons.search),
+              ),
+            ),
+            TextField(
+              controller: latController,
+              decoration: InputDecoration(labelText: settings.getString('latitude')),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: lngController,
+              decoration: InputDecoration(labelText: settings.getString('longitude')),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(settings.getString('cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              if (latController.text.isNotEmpty && lngController.text.isNotEmpty) {
+                context.read<PanchangProvider>().setManualLocation(
+                  double.parse(latController.text),
+                  double.parse(lngController.text),
+                  placeController.text,
+                );
+                Navigator.pop(context);
+              }
+            },
+            child: Text(settings.getString('set')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
