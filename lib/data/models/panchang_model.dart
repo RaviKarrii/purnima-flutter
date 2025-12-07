@@ -1,9 +1,9 @@
 class PanchangResult {
-  final PanchangElement? tithi;
+  final List<PanchangElement>? tithi;
   final PanchangElement? vara;
-  final PanchangElement? nakshatra;
-  final PanchangElement? yoga;
-  final PanchangElement? karana;
+  final List<PanchangElement>? nakshatra;
+  final List<PanchangElement>? yoga;
+  final List<PanchangElement>? karana;
   final String? sunrise;
   final String? sunset;
   final String? moonrise;
@@ -13,6 +13,8 @@ class PanchangResult {
   final String? placeName;
   final double? latitude;
   final double? longitude;
+
+  String? get tithiString => tithi?.map((e) => e.name).join(', ');
 
   PanchangResult({
     this.tithi,
@@ -31,12 +33,20 @@ class PanchangResult {
   });
 
   factory PanchangResult.fromJson(Map<String, dynamic> json) {
+    List<PanchangElement>? parseList(dynamic data, String nameKey) {
+      if (data == null) return null;
+      if (data is List) {
+        return data.map((e) => PanchangElement.fromJson(e, nameKey)).toList();
+      }
+      return null;
+    }
+
     return PanchangResult(
-      tithi: json['tithi'] != null ? PanchangElement.fromJson(json['tithi'], 'tithiName') : null,
+      tithi: parseList(json['tithi'], 'tithiName'),
       vara: json['vara'] != null ? PanchangElement.fromJson(json['vara'], 'varaName') : null,
-      nakshatra: json['nakshatra'] != null ? PanchangElement.fromJson(json['nakshatra'], 'nakshatraName') : null,
-      yoga: json['yoga'] != null ? PanchangElement.fromJson(json['yoga'], 'yogaName') : null,
-      karana: json['karana'] != null ? PanchangElement.fromJson(json['karana'], 'karanaName') : null,
+      nakshatra: parseList(json['nakshatra'], 'nakshatraName'),
+      yoga: parseList(json['yoga'], 'yogaName'),
+      karana: parseList(json['karana'], 'karanaName'),
       sunrise: json['sunrise'],
       sunset: json['sunset'],
       moonrise: json['moonrise'],

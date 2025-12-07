@@ -69,4 +69,48 @@ class MuhurtaProvider with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  List<MuhurtaSlot>? _advancedMuhurta;
+  List<MuhurtaSlot>? get advancedMuhurta => _advancedMuhurta;
+
+  Future<void> loadAdvancedMuhurta({
+    required String type,
+    required DateTime start,
+    required DateTime end,
+    required double lat,
+    required double lng,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final startStr = start.toIso8601String();
+      final endStr = end.toIso8601String();
+
+      // Get timezone offset
+      final now = DateTime.now();
+      final offset = now.timeZoneOffset;
+      final hours = offset.inHours.abs().toString().padLeft(2, '0');
+      final minutes = (offset.inMinutes.abs() % 60).toString().padLeft(2, '0');
+      final sign = offset.isNegative ? '-' : '+';
+      final timezone = '$sign$hours:$minutes';
+
+      _advancedMuhurta = await _repository.getAdvancedMuhurta(
+        type,
+        startStr,
+        endStr,
+        lat,
+        lng,
+        timezone,
+        _settings.language,
+      );
+    } catch (e) {
+      print("[MuhurtaProvider] Advanced ERROR: $e");
+      _error = e.toString();
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

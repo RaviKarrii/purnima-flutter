@@ -11,6 +11,8 @@ import 'data/repositories/muhurta_repository.dart';
 import 'presentation/providers/dasa_provider.dart';
 import 'presentation/providers/muhurta_provider.dart';
 import 'presentation/splash_screen.dart';
+import 'data/repositories/compatibility_repository.dart';
+import 'presentation/providers/compatibility_provider.dart';
 
 import 'presentation/providers/settings_provider.dart';
 
@@ -64,6 +66,14 @@ class PurnimaApp extends StatelessWidget {
             context.read<SettingsProvider>()
           ),
           update: (_, repo, settings, prev) => prev!..update(repo, settings),
+        ),
+        ProxyProvider<ApiClient, CompatibilityRepository>(
+          update: (_, client, __) => CompatibilityRepository(client),
+        ),
+        ChangeNotifierProvider<CompatibilityProvider>(
+           create: (context) => CompatibilityProvider(
+             context.read<CompatibilityRepository>(),
+           ),
         ),
       ],
       child: MaterialApp(

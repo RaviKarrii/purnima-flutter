@@ -27,26 +27,18 @@ class PanchangUtils {
     if (timeStr == null) return '--:--';
     try {
       // Check if it's an ISO 8601 string (contains 'T')
-      DateTime dateTime;
       if (timeStr.contains('T')) {
-          dateTime = DateTime.parse(timeStr).toLocal();
+          // Extract HH:mm directly from string to ensure absolutely no timezone conversion or shifting happens
+          // Format is usually YYYY-MM-DDTHH:mm:ss
+          final timePart = timeStr.split('T')[1];
+          if (timePart.length >= 5) {
+            return timePart.substring(0, 5);
+          }
+          return timePart;
       } else {
-        // Assume HH:mm string (UTC) if no date part
-        final parts = timeStr.split(':');
-        if (parts.length < 2) return timeStr;
-        
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
-        
-        final now = DateTime.now().toUtc();
-        final utcTime = DateTime.utc(now.year, now.month, now.day, hour, minute);
-        dateTime = utcTime.toLocal();
+        // Assume HH:mm string. 
+        return timeStr;
       }
-      
-      // Format to HH:mm
-      final localHour = dateTime.hour.toString().padLeft(2, '0');
-      final localMinute = dateTime.minute.toString().padLeft(2, '0');
-      return "$localHour:$localMinute";
     } catch (e) {
       return timeStr;
     }

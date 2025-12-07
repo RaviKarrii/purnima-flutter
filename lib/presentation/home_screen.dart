@@ -7,6 +7,9 @@ import 'package:intl/intl.dart';
 import 'widgets/vedic_background.dart';
 import 'widgets/vedic_card.dart';
 import 'providers/muhurta_provider.dart';
+import 'muhurta/muhurta_screen.dart';
+import 'muhurta/advanced_muhurta_screen.dart';
+import 'compatibility/compatibility_screen.dart';
 import 'widgets/muhurta_content.dart';
 import 'widgets/chart_input_widget.dart';
 import 'widgets/unified_astrology_widget.dart';
@@ -15,6 +18,7 @@ import 'settings/settings_screen.dart';
 import 'providers/settings_provider.dart';
 import 'widgets/location_search_delegate.dart';
 import '../data/models/muhurta_model.dart';
+import '../data/models/panchang_model.dart';
 import 'chart/chart_input_screen.dart'; // Deprecated but might be referenced
 
 class HomeScreen extends StatefulWidget {
@@ -62,6 +66,8 @@ class _HomeScreenState extends State<HomeScreen> {
               );
       case 2:
         return const MuhurtaViewWrapper();
+      case 3:
+        return const ToolsView();
       default:
         return const PanchangView();
     }
@@ -126,7 +132,53 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: const Icon(Icons.access_time),
             label: settings.getString('nav_muhurta'),
           ),
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.grid_view),
+            label: "Tools",
+          ),
         ],
+      ),
+    );
+  }
+}
+
+
+class ToolsView extends StatelessWidget {
+  const ToolsView({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _buildToolCard(
+          context, 
+          'Advanced Muhurta Search', 
+          'Search for specific muhurtas (Marriage, vehicle, etc) across dates.', 
+          Icons.search,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvancedMuhurtaScreen())),
+        ),
+        _buildToolCard(
+          context, 
+          'Compatibility Matching (Asthakoot)', 
+          'Check marriage compatibility between two charts.', 
+          Icons.favorite,
+          () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CompatibilityScreen())),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildToolCard(BuildContext context, String title, String subtitle, IconData icon, VoidCallback onTap) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      child: ListTile(
+        leading: Icon(icon, size: 40, color: Theme.of(context).primaryColor),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(subtitle),
+        onTap: onTap,
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
@@ -192,44 +244,49 @@ class PanchangView extends StatelessWidget {
                   const SizedBox(height: 24),
                   Column(
                     children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPanchangBadge(context, settings.getString('tithi'), 
-                              panchang.tithi?.number != null 
-                                ? PanchangUtils.getLocalizedTithiName(context, panchang.tithi!.number!)
-                                : panchang.tithi?.name, 
-                              PanchangUtils.formatTime(panchang.tithi?.endTime)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildPanchangBadge(context, settings.getString('vara'), panchang.vara?.name, PanchangUtils.formatTime(panchang.vara?.endTime)),
-                          ),
-                        ],
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildPanchangBadge(context, settings.getString('tithi'), panchang.tithi),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildPanchangBadge(context, settings.getString('vara'), panchang.vara != null ? [panchang.vara!] : []),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPanchangBadge(context, settings.getString('nakshatra'), panchang.nakshatra?.name, PanchangUtils.formatTime(panchang.nakshatra?.endTime)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildPanchangBadge(context, settings.getString('yoga'), panchang.yoga?.name, PanchangUtils.formatTime(panchang.yoga?.endTime)),
-                          ),
-                        ],
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildPanchangBadge(context, settings.getString('nakshatra'), panchang.nakshatra),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildPanchangBadge(context, settings.getString('yoga'), panchang.yoga),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: _buildPanchangBadge(context, settings.getString('karana'), panchang.karana?.name, PanchangUtils.formatTime(panchang.karana?.endTime)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildCurrentChoghadiya(context),
-                          ),
-                        ],
+                      IntrinsicHeight(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: _buildPanchangBadge(context, settings.getString('karana'), panchang.karana),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildCurrentChoghadiya(context),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -337,21 +394,44 @@ class PanchangView extends StatelessWidget {
     );
   }
 
-  Widget _buildPanchangBadge(BuildContext context, String title, String? value, String? endTime) {
+  Widget _buildPanchangBadge(BuildContext context, String title, List<PanchangElement>? elements) {
     final settings = context.read<SettingsProvider>();
+    
+    List<Widget> content = [];
+    if (elements == null || elements.isEmpty) {
+      content.add(Text(settings.getString('unknown'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2)));
+    } else {
+      for (int i = 0; i < elements.length; i++) {
+        final el = elements[i];
+        if (i > 0) {
+           content.add(const Padding(padding: EdgeInsets.symmetric(vertical: 4), child: Divider(height: 1, thickness: 0.5)));
+        }
+        
+        // Name logic: try to localize if it is tithi, otherwise just name
+        String name = el.name ?? settings.getString('unknown');
+        if (el.number != null && title == settings.getString('tithi')) {
+           name = PanchangUtils.getLocalizedTithiName(context, el.number!);
+        }
+
+        content.add(Text(name, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, height: 1.2), textAlign: TextAlign.center));
+        
+        if (el.endTime != null) {
+           content.add(Text('${settings.getString('ends')}: ${PanchangUtils.formatTime(el.endTime)}', 
+             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF8B0000))));
+        }
+      }
+    }
+
     return VedicCard(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(value ?? settings.getString('unknown'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2)),
-          if (endTime != null) ...[
-            const SizedBox(height: 8),
-            Text('${settings.getString('ends')}: $endTime', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF8B0000))),
-          ],
+          ...content,
         ],
       ),
     );

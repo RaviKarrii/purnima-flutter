@@ -13,9 +13,11 @@ void main() {
             "endTime": "07:30"
           }
         ],
-        "rahuKalam": {
-          "startTime": "16:30",
-          "endTime": "18:00"
+        "inauspiciousTimes": {
+          "rahuKalam": {
+            "startTime": "16:30",
+            "endTime": "18:00"
+          }
         }
       };
 

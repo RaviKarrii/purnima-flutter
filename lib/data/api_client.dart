@@ -3,6 +3,7 @@ import 'models/panchang_model.dart';
 import 'models/chart_model.dart';
 import 'models/dasa_model.dart';
 import 'models/muhurta_model.dart';
+import 'models/compatibility_model.dart';
 
 class ApiClient {
   final Dio _dio;
@@ -103,4 +104,57 @@ class ApiClient {
       throw Exception('Failed to load muhurta: $e');
     }
   }
+  Future<List<MuhurtaSlot>> getAdvancedMuhurta(
+    String type,
+    String start,
+    String end,
+    double lat,
+    double lng,
+    String zoneId,
+    String language,
+  ) async {
+    try {
+      final response = await _dio.get(
+        '/api/muhurta/$type',
+        queryParameters: {
+          'start': start,
+          'end': end,
+          'latitude': lat,
+          'longitude': lng,
+          'zoneId': zoneId,
+        },
+        options: Options(
+          headers: {
+            'Accept-Language': language,
+          },
+        ),
+      );
+      
+      if (response.data is List) {
+        return (response.data as List).map((e) => MuhurtaSlot.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      throw Exception('Failed to load advanced muhurta: $e');
+    }
+  }
+
+  Future<CompatibilityResult> getCompatibility(
+    BirthDataInput maleData,
+    BirthDataInput femaleData,
+  ) async {
+    try {
+      final response = await _dio.post(
+        '/api/compatibility',
+        data: {
+          'maleBirthData': maleData.toJson(),
+          'femaleBirthData': femaleData.toJson(),
+        },
+      );
+      return CompatibilityResult.fromJson(response.data);
+    } catch (e) {
+      throw Exception('Failed to calculate compatibility: $e');
+    }
+  }
 }
+

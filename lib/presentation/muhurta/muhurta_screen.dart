@@ -6,6 +6,8 @@ import '../providers/muhurta_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/vedic_background.dart';
 import '../widgets/vedic_card.dart';
+import 'advanced_muhurta_screen.dart';
+import '../compatibility/compatibility_screen.dart';
 
 class MuhurtaScreen extends StatelessWidget {
   const MuhurtaScreen({super.key});
@@ -35,6 +37,24 @@ class MuhurtaScreen extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildSectionTitle(context, settings.getString('choghadiya')),
+                  Center(
+                    child: Wrap(
+                      spacing: 8,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AdvancedMuhurtaScreen())),
+                          icon: const Icon(Icons.search),
+                          label: const Text('Advanced Search'),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CompatibilityScreen())),
+                          icon: const Icon(Icons.favorite),
+                          label: const Text('Match Making'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   _buildChoghadiyaSection(context, muhurta, settings),
                   const SizedBox(height: 24),
                   _buildSectionTitle(context, settings.getString('hora')),
