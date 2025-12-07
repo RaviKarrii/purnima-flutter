@@ -15,5 +15,9 @@ void main() {
     // Verify that the splash screen is displayed
     expect(find.text('Purnima'), findsOneWidget);
     expect(find.byIcon(Icons.wb_sunny), findsOneWidget);
+
+    // Discharge the timer
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pump(); // Advance navigation
   });
 }
