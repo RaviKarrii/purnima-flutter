@@ -11,8 +11,51 @@ class ApiClient {
 
   ApiClient() : _dio = Dio() {
     _dio.options.baseUrl = baseUrl;
-    _dio.options.connectTimeout = const Duration(seconds: 30);
-    _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.connectTimeout = const Duration(seconds: 150); // Increased 5x for heavy calculations
+    _dio.options.receiveTimeout = const Duration(seconds: 150);
+  }
+
+
+  Future<List<MuhurtaSlot>> getAdvancedMuhurta(
+    String type,
+    String start,
+    String end,
+    double lat,
+    double lng,
+    String zoneId,
+    String language,
+  ) async {
+    try {
+      final response = await _dio.get(
+        '/api/muhurta/$type',
+        queryParameters: {
+          'start': start,
+          'end': end,
+          'latitude': lat,
+          'longitude': lng,
+          'zoneId': zoneId,
+        },
+        options: Options(
+          headers: {
+            'Accept-Language': language,
+          },
+        ),
+      );
+      
+      if (response.data is List) {
+        return (response.data as List).map((e) => MuhurtaSlot.fromJson(e)).toList();
+      }
+      return [];
+    } catch (e) {
+      if (e is DioException) {
+        if (e.type == DioExceptionType.connectionTimeout || 
+            e.type == DioExceptionType.receiveTimeout || 
+            e.type == DioExceptionType.sendTimeout) {
+           throw Exception('Request timed out. The server took too long to respond. Please try a shorter date range.');
+        }
+      }
+      throw Exception('Failed to load advanced muhurta: $e');
+    }
   }
 
   Future<PanchangResult> getPanchang(String date, double lat, double lng, String placeName, String language, String timezone) async {
@@ -101,43 +144,17 @@ class ApiClient {
       );
       return MuhurtaResult.fromJson(response.data);
     } catch (e) {
+      if (e is DioException) {
+        if (e.type == DioExceptionType.connectionTimeout || 
+            e.type == DioExceptionType.receiveTimeout || 
+            e.type == DioExceptionType.sendTimeout) {
+           throw Exception('Request timed out. The server took too long to calculate muhurta.');
+        }
+      }
       throw Exception('Failed to load muhurta: $e');
     }
   }
-  Future<List<MuhurtaSlot>> getAdvancedMuhurta(
-    String type,
-    String start,
-    String end,
-    double lat,
-    double lng,
-    String zoneId,
-    String language,
-  ) async {
-    try {
-      final response = await _dio.get(
-        '/api/muhurta/$type',
-        queryParameters: {
-          'start': start,
-          'end': end,
-          'latitude': lat,
-          'longitude': lng,
-          'zoneId': zoneId,
-        },
-        options: Options(
-          headers: {
-            'Accept-Language': language,
-          },
-        ),
-      );
-      
-      if (response.data is List) {
-        return (response.data as List).map((e) => MuhurtaSlot.fromJson(e)).toList();
-      }
-      return [];
-    } catch (e) {
-      throw Exception('Failed to load advanced muhurta: $e');
-    }
-  }
+
 
   Future<CompatibilityResult> getCompatibility(
     BirthDataInput maleData,

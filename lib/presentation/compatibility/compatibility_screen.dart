@@ -119,22 +119,74 @@ class _CompatibilityScreenState extends State<CompatibilityScreen> {
   }
 
   Widget _buildResult(CompatibilityResult res) {
+    Color scoreColor;
+    final percentage = res.compatibilityPercentage ?? 0.0;
+    if (percentage >= 50) {
+      scoreColor = Colors.green;
+    } else {
+      scoreColor = Colors.red;
+    }
+
     return VedicCard(
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            Text("Total Score: ${res.totalScore} / ${res.maximumScore}", style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.purple)),
+            // Score Circle
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: CircularProgressIndicator(
+                    value: percentage / 100,
+                    strokeWidth: 10,
+                    valueColor: AlwaysStoppedAnimation<Color>(scoreColor),
+                    backgroundColor: Colors.grey.shade200,
+                  ),
+                ),
+                Column(
+                  children: [
+                    Text("${res.totalScore}", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: scoreColor)),
+                    Text("/ ${res.maximumScore}", style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(res.compatibilityLevel ?? "Unknown", style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: scoreColor)),
             const SizedBox(height: 8),
-            Text("Level: ${res.compatibilityLevel}", style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-             const SizedBox(height: 8),
-            Text("${res.overallAssessment}", textAlign: TextAlign.center),
+            Text(res.overallAssessment ?? "", textAlign: TextAlign.center, style: const TextStyle(fontSize: 14)),
             const Divider(height: 32),
-            if (res.detailedBreakdown != null)
-              Text(res.detailedBreakdown!, style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+            
+            // Breakdown Table
+            const Text("Asthakoot Breakdown", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            const SizedBox(height: 16),
+            _buildKootaRow("Varna (Work)", res.varnaKoota, 1),
+            _buildKootaRow("Vashya (Dominance)", res.vashyaKoota, 2),
+            _buildKootaRow("Tara (Destiny)", res.taraKoota, 3),
+            _buildKootaRow("Yoni (Mentality)", res.yoniKoota, 4),
+            _buildKootaRow("Graha Maitri (Friendship)", res.grahaMaitriKoota, 5),
+            _buildKootaRow("Gana (Temperament)", res.ganaKoota, 6),
+            _buildKootaRow("Bhakoot (Love)", res.bhakootKoota, 7),
+            _buildKootaRow("Nadi (Health)", res.nadiKoota, 8),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildKootaRow(String title, double? score, double max) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Expanded(child: Text(title)),
+          Text("${score ?? 0} / $max", style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
+      ),
+    );
+  }
 }
+
