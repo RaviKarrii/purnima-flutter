@@ -170,7 +170,19 @@ class _AdvancedMuhurtaScreenState extends State<AdvancedMuhurtaScreen> {
                 Text(dateFormat.format(start), style: const TextStyle(fontWeight: FontWeight.bold)),
                 Chip(
                    label: Text(slot.quality ?? 'Unknown', style: const TextStyle(color: Colors.white, fontSize: 10)),
-                   backgroundColor: (slot.quality?.toLowerCase() == 'good') ? Colors.green : Colors.orange,
+                   backgroundColor: () {
+                     if (slot.color != null) {
+                       try {
+                         String hex = slot.color!.replaceAll('#', '');
+                         if (hex.length == 6) hex = 'FF$hex';
+                         return Color(int.parse(hex, radix: 16));
+                       } catch (e) {
+                         debugPrint('Error parsing color: ${slot.color}');
+                       }
+                     }
+                     // Fallback logic if color is missing
+                     return (slot.quality?.toLowerCase() == 'good') ? Colors.green : Colors.orange;
+                   }(),
                    padding: EdgeInsets.zero,
                    visualDensity: VisualDensity.compact,
                 ),

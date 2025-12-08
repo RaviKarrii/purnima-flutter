@@ -344,36 +344,20 @@ class PanchangView extends StatelessWidget {
 
     if (current == null) return const SizedBox();
 
-    Color bgColor;
-    // Map localized nature strings or raw API values to English equivalents for color logic
-    String natureKey = current.nature?.toLowerCase() ?? 'neutral';
+    if (current == null) return const SizedBox();
 
-    // List of known 'GOOD' natures across supported languages
-    const goodNatures = [
-      'good', 'shubh', 'labh', 'amrit', 
-      'शुभ', 'लाभ', 'अमृत', // Hindi
-      'శుభం', 'లాభం', 'అమృతం', // Telugu (Exact API strings)
-      'शुभम्', 'लाभः', 'अमृतम्', // Sanskrit
-      'நல்லது', 'சுபம்', 'லாபம்', 'அமிர்தம்', // Tamil
-      'ಶುಭ', 'ಲಾಭ', 'ಅಮೃತ', // Kannada
-    ];
-    
-    // List of known 'BAD' natures
-    const badNatures = [
-      'bad', 'rog', 'udveg', 'kaal', 'kal', 
-      'अशुभ', 'रोग', 'उद्वेग', 'काल', // Hindi
-      'అశుభం', 'రోగం', 'ఉద్వేగం', 'కాలం', // Telugu (Exact API strings)
-      'अशुभम्', 'रोगः', 'उद्वेगः', 'कालः', // Sanskrit
-      'கெட்டது', 'ரோகம்', 'உத்வேகம்', 'காலம்', // Tamil
-      'ಅಶುಭ', 'ರೋಗ', 'ಉದ್ವೇಗ', 'ಕಾಲ', // Kannada
-    ];
-
-    if (goodNatures.contains(natureKey)) {
-      bgColor = Colors.green.shade100;
-    } else if (badNatures.contains(natureKey)) {
-      bgColor = Colors.red.shade100;
-    } else {
-      bgColor = Colors.grey.shade200;
+    Color bgColor = Colors.grey.shade200;
+    if (current.color != null) {
+      try {
+        // Parse #RRGGBB
+        String hex = current.color!.replaceAll('#', '');
+        if (hex.length == 6) {
+           hex = 'FF$hex';
+        }
+        bgColor = Color(int.parse(hex, radix: 16));
+      } catch (e) {
+        print("Error parsing color: ${current.color}");
+      }
     }
 
     return VedicCard(

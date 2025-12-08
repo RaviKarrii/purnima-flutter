@@ -86,34 +86,16 @@ class MuhurtaContent extends StatelessWidget {
   }
 
   Widget _buildChoghadiyaCard(BuildContext context, Choghadiya c, SettingsProvider settings) {
-    Color color;
-    String natureKey = c.nature?.toLowerCase() ?? 'neutral';
-
-    // Same logic as HomeScreen for consistent coloring
-    const goodNatures = [
-      'good', 'shubh', 'labh', 'amrit', 
-      'शुभ', 'लाभ', 'अमृत', // Hindi
-      'శుభం', 'లాభం', 'అమృతం', // Telugu (Exact API strings)
-      'शुभम्', 'लाभः', 'अमृतम्', // Sanskrit
-      'நல்லது', 'சுபம்', 'லாபம்', 'அமிர்தம்', // Tamil
-      'ಶುಭ', 'ಲಾಭ', 'ಅಮೃತ', // Kannada
-    ];
+    Color color = Colors.grey.shade200;
     
-    const badNatures = [
-      'bad', 'rog', 'udveg', 'kaal', 'kal', 
-      'अशुभ', 'रोग', 'उद्वेग', 'काल', // Hindi
-      'అశుభం', 'రోగం', 'ఉద్వేగం', 'కాలం', // Telugu (Exact API strings)
-      'अशुभम्', 'रोगः', 'उद्वेगः', 'कालः', // Sanskrit
-      'கெட்டது', 'ரோகம்', 'உத்வேகம்', 'காலம்', // Tamil
-      'ಅಶುಭ', 'ರೋಗ', 'ಉದ್ವೇಗ', 'ಕಾಲ', // Kannada
-    ];
-
-    if (goodNatures.contains(natureKey)) {
-      color = Colors.green.shade100;
-    } else if (badNatures.contains(natureKey)) {
-      color = Colors.red.shade100;
-    } else {
-      color = Colors.grey.shade200;
+    if (c.color != null) {
+      try {
+        String hex = c.color!.replaceAll('#', '');
+        if (hex.length == 6) hex = 'FF$hex';
+        color = Color(int.parse(hex, radix: 16));
+      } catch (e) {
+        debugPrint('Error parsing color: ${c.color}');
+      }
     }
 
     return Card(
@@ -125,7 +107,7 @@ class MuhurtaContent extends StatelessWidget {
           children: [
             Text(settings.getString(c.name?.toLowerCase() ?? '') ?? c.name ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
             Text('${PanchangUtils.formatTime(c.startTime)} - ${PanchangUtils.formatTime(c.endTime)}', style: const TextStyle(fontSize: 12)),
-            Text(settings.getString(natureKey) ?? c.nature ?? '', style: const TextStyle(fontSize: 10)),
+            Text(settings.getString(c.nature?.toLowerCase() ?? 'neutral') ?? c.nature ?? '', style: const TextStyle(fontSize: 10)),
           ],
         ),
       ),

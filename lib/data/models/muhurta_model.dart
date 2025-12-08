@@ -58,8 +58,9 @@ class Choghadiya {
   final String? nature;
   final String? startTime;
   final String? endTime;
+  final String? color;
 
-  Choghadiya({this.name, this.nature, this.startTime, this.endTime});
+  Choghadiya({this.name, this.nature, this.startTime, this.endTime, this.color});
 
   factory Choghadiya.fromJson(Map<String, dynamic> json) {
     return Choghadiya(
@@ -67,6 +68,7 @@ class Choghadiya {
       nature: json['nature'],
       startTime: json['startTime'],
       endTime: json['endTime'],
+      color: json['color'],
     );
   }
 }
@@ -107,6 +109,7 @@ class MuhurtaSlot {
   final String? quality;
   final List<String>? positiveFactors;
   final List<String>? negativeFactors;
+  final String? color;
 
   MuhurtaSlot({
     this.startTime,
@@ -114,6 +117,7 @@ class MuhurtaSlot {
     this.quality,
     this.positiveFactors,
     this.negativeFactors,
+    this.color,
   });
 
   factory MuhurtaSlot.fromJson(Map<String, dynamic> json) {
@@ -127,6 +131,7 @@ class MuhurtaSlot {
       negativeFactors: json['negativeFactors'] != null
           ? List<String>.from(json['negativeFactors'])
           : null,
+      color: json['color'],
     );
   }
 }
