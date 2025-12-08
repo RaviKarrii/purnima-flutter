@@ -46,9 +46,11 @@ class _CompatibilityScreenState extends State<CompatibilityScreen> {
       longitude: double.parse(_fLngController.text),
     );
 
+    final language = context.read<SettingsProvider>().language;
     await context.read<CompatibilityProvider>().calculateCompatibility(
       maleData: maleInput,
       femaleData: femaleInput,
+      language: language,
     );
   }
 

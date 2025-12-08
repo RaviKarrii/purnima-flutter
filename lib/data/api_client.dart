@@ -159,6 +159,7 @@ class ApiClient {
   Future<CompatibilityResult> getCompatibility(
     BirthDataInput maleData,
     BirthDataInput femaleData,
+    String language,
   ) async {
     try {
       final response = await _dio.post(
@@ -167,6 +168,11 @@ class ApiClient {
           'maleBirthData': maleData.toJson(),
           'femaleBirthData': femaleData.toJson(),
         },
+        options: Options(
+          headers: {
+            'Accept-Language': language,
+          },
+        ),
       );
       return CompatibilityResult.fromJson(response.data);
     } catch (e) {

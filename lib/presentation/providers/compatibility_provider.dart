@@ -23,13 +23,14 @@ class CompatibilityProvider with ChangeNotifier {
   Future<void> calculateCompatibility({
     required BirthDataInput maleData,
     required BirthDataInput femaleData,
+    required String language,
   }) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      _result = await _repository.getCompatibility(maleData, femaleData);
+      _result = await _repository.getCompatibility(maleData, femaleData, language);
     } catch (e) {
       _error = e.toString();
     } finally {

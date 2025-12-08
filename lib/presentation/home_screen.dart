@@ -235,66 +235,72 @@ class PanchangView extends StatelessWidget {
               return Center(child: Text(settings.getString('no_data')));
             }
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  _buildHeader(context, panchang),
-                  const SizedBox(height: 24),
-                  Column(
-                    children: [
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: _buildPanchangBadge(context, settings.getString('tithi'), panchang.tithi),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildPanchangBadge(context, settings.getString('vara'), panchang.vara != null ? [panchang.vara!] : []),
-                            ),
-                          ],
+            return RefreshIndicator(
+              onRefresh: () async {
+                 await context.read<PanchangProvider>().loadPanchang();
+              },
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    _buildHeader(context, panchang),
+                    const SizedBox(height: 24),
+                    Column(
+                      children: [
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _buildPanchangBadge(context, settings.getString('tithi'), panchang.tithi),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildPanchangBadge(context, settings.getString('vara'), panchang.vara != null ? [panchang.vara!] : []),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: _buildPanchangBadge(context, settings.getString('nakshatra'), panchang.nakshatra),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildPanchangBadge(context, settings.getString('yoga'), panchang.yoga),
-                            ),
-                          ],
+                        const SizedBox(height: 12),
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _buildPanchangBadge(context, settings.getString('nakshatra'), panchang.nakshatra),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildPanchangBadge(context, settings.getString('yoga'), panchang.yoga),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 12),
-                      IntrinsicHeight(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: _buildPanchangBadge(context, settings.getString('karana'), panchang.karana),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _buildCurrentChoghadiya(context),
-                            ),
-                          ],
+                        const SizedBox(height: 12),
+                        IntrinsicHeight(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: _buildPanchangBadge(context, settings.getString('karana'), panchang.karana),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: _buildCurrentChoghadiya(context),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  _buildSunMoonCard(context, panchang),
-                  const SizedBox(height: 24),
-                  // Removed bottom _buildCurrentChoghadiya
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSunMoonCard(context, panchang),
+                    const SizedBox(height: 24),
+                    // Removed bottom _buildCurrentChoghadiya
+                  ],
+                ),
               ),
             );
           },
