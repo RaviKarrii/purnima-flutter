@@ -161,7 +161,7 @@ class _SouthIndianChartPainter extends CustomPainter {
             text: displayName,
             style: GoogleFonts.notoSans(
               textStyle: TextStyle(
-                color: Colors.black87,
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
               ),

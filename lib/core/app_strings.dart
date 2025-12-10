@@ -79,6 +79,10 @@ class AppStrings {
       'char': 'Char',
       'kal': 'Kal',
       'cal': 'Chal', // Variation
+      'theme': 'Theme',
+      'theme_light': 'Light',
+      'theme_dark': 'Dark',
+      'theme_system': 'System Default',
     },
     'hi': {
       'app_title': 'पूर्णिमा',

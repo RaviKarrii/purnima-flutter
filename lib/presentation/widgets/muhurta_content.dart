@@ -86,28 +86,46 @@ class MuhurtaContent extends StatelessWidget {
   }
 
   Widget _buildChoghadiyaCard(BuildContext context, Choghadiya c, SettingsProvider settings) {
-    Color color = Colors.grey.shade200;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    Color? choghadiyaColor;
     if (c.color != null) {
       try {
         String hex = c.color!.replaceAll('#', '');
         if (hex.length == 6) hex = 'FF$hex';
-        color = Color(int.parse(hex, radix: 16));
+        choghadiyaColor = Color(int.parse(hex, radix: 16));
       } catch (e) {
         debugPrint('Error parsing color: ${c.color}');
       }
     }
 
+    Color cardColor;
+    Color textColor;
+    
+    if (isDark) {
+       cardColor = Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E1E);
+       textColor = choghadiyaColor ?? Colors.white;
+    } else {
+       cardColor = choghadiyaColor ?? Colors.grey.shade200;
+       textColor = Colors.black;
+    }
+
     return Card(
-      color: color,
+      color: cardColor,
       margin: const EdgeInsets.only(right: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
-        padding: const EdgeInsets.all(8.0),
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           children: [
-            Text(settings.getString(c.name?.toLowerCase() ?? '') ?? c.name ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('${PanchangUtils.formatTime(c.startTime)} - ${PanchangUtils.formatTime(c.endTime)}', style: const TextStyle(fontSize: 12)),
-            Text(settings.getString(c.nature?.toLowerCase() ?? 'neutral') ?? c.nature ?? '', style: const TextStyle(fontSize: 10)),
+            Text(settings.getString(c.name?.toLowerCase() ?? '') ?? c.name ?? '', 
+              style: TextStyle(fontWeight: FontWeight.bold, color: textColor)),
+            const SizedBox(height: 4),
+            Text('${PanchangUtils.formatTime(c.startTime)} - ${PanchangUtils.formatTime(c.endTime)}', 
+              style: TextStyle(fontSize: 12, color: isDark ? Theme.of(context).primaryColor.withOpacity(0.9) : const Color(0xFF8B0000))),
+            const SizedBox(height: 4),
+            Text(settings.getString(c.nature?.toLowerCase() ?? 'neutral') ?? c.nature ?? '', 
+              style: TextStyle(fontSize: 10, color: textColor.withOpacity(0.8))),
           ],
         ),
       ),
@@ -118,11 +136,11 @@ class MuhurtaContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(settings.getString('day'), style: Theme.of(context).textTheme.titleMedium),
+        Text(settings.getString('day'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         _buildHoraList(context, muhurta.dayHora),
         const SizedBox(height: 16),
-        Text(settings.getString('night'), style: Theme.of(context).textTheme.titleMedium),
+        Text(settings.getString('night'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
         _buildHoraList(context, muhurta.nightHora),
       ],
@@ -140,16 +158,18 @@ class MuhurtaContent extends StatelessWidget {
   }
 
   Widget _buildHoraCard(BuildContext context, Hora h) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return VedicCard(
       margin: const EdgeInsets.only(right: 8),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            Text(h.planet ?? '', style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('${PanchangUtils.formatTime(h.startTime)} - ${PanchangUtils.formatTime(h.endTime)}', style: const TextStyle(fontSize: 12)),
-          ],
-        ),
+      padding: const EdgeInsets.all(12.0),
+      child: Column(
+        children: [
+          Text(h.planet ?? '', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text('${PanchangUtils.formatTime(h.startTime)} - ${PanchangUtils.formatTime(h.endTime)}', 
+            style: TextStyle(fontSize: 12, color: isDark ? Theme.of(context).primaryColor.withOpacity(0.9) : const Color(0xFF8B0000))),
+        ],
       ),
     );
   }
@@ -172,11 +192,13 @@ class MuhurtaContent extends StatelessWidget {
   }
 
   Widget _buildTimeRow(BuildContext context, String label, TimeSpan? time) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-        Text('${PanchangUtils.formatTime(time?.startTime)} - ${PanchangUtils.formatTime(time?.endTime)}'),
+        Text(label, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+        Text('${PanchangUtils.formatTime(time?.startTime)} - ${PanchangUtils.formatTime(time?.endTime)}', 
+           style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Theme.of(context).primaryColor : const Color(0xFF8B0000))),
       ],
     );
   }

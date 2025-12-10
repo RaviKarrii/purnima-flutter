@@ -312,10 +312,9 @@ class PanchangView extends StatelessWidget {
   Widget _buildCurrentChoghadiya(BuildContext context) {
     final muhurta = context.watch<MuhurtaProvider>().muhurta;
     final settings = context.watch<SettingsProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     if (muhurta == null) {
-      // Return a placeholder or empty if no data yet. 
-      // To match alignment with other cards, we can return an empty card or sizebox.
       return const SizedBox(); 
     }
     
@@ -330,8 +329,6 @@ class PanchangView extends StatelessWidget {
            final start = DateTime.parse(c.startTime!).toLocal();
            final end = DateTime.parse(c.endTime!).toLocal();
 
-          //  print("CHOGHADIYA CHECK: ${c.name} (${c.nature}) Start: $start End: $end Now: $now");
-           
            if (now.isAfter(start) && now.isBefore(end)) {
              current = c;
              break;
@@ -344,9 +341,7 @@ class PanchangView extends StatelessWidget {
 
     if (current == null) return const SizedBox();
 
-    if (current == null) return const SizedBox();
-
-    Color bgColor = Colors.grey.shade200;
+    Color? choghadiyaColor;
     if (current.color != null) {
       try {
         // Parse #RRGGBB
@@ -354,31 +349,50 @@ class PanchangView extends StatelessWidget {
         if (hex.length == 6) {
            hex = 'FF$hex';
         }
-        bgColor = Color(int.parse(hex, radix: 16));
+        choghadiyaColor = Color(int.parse(hex, radix: 16));
       } catch (e) {
         print("Error parsing color: ${current.color}");
       }
     }
 
+    // Colors based on theme
+    Color cardBgColor;
+    Color titleColor;
+    Color nameColor;
+    Color timeColor;
+
+    if (isDark) {
+      cardBgColor = Theme.of(context).cardTheme.color ?? const Color(0xFF1E1E1E);
+      // If we have a choghadiya color, use it for the Name, otherwise primary
+      titleColor = Theme.of(context).primaryColor; // Saffron
+      nameColor = choghadiyaColor ?? Colors.white; 
+      // Ensure name color is visible on dark bg. If it's too dark (like dark red), lighten it?
+      // But typically choghadiya colors are light/pastel-ish or standard. 
+      // Let's assume they are okay, or stick to Safety:
+      // Actually, if choghadiyaColor is the "Meaning" (Red=Bad, Green=Good), we want to preserve that hue.
+      timeColor = Theme.of(context).primaryColor.withOpacity(0.8);
+    } else {
+      cardBgColor = choghadiyaColor ?? Colors.grey.shade200;
+      titleColor = Colors.black87; // Force dark on pastel bg
+      nameColor = Colors.black;
+      timeColor = const Color(0xFF8B0000);
+    }
+
     return VedicCard(
-      backgroundColor: bgColor,
+      backgroundColor: cardBgColor,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-           Text(settings.getString('choghadiya'), style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Theme.of(context).primaryColor, fontWeight: FontWeight.bold)),
+           Text(settings.getString('choghadiya'), style: Theme.of(context).textTheme.titleSmall?.copyWith(color: titleColor, fontWeight: FontWeight.bold)),
            const SizedBox(height: 8),
            Text(settings.getString(current.name?.toLowerCase() ?? '') ?? current.name ?? '', 
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2)),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, height: 1.2, color: nameColor)),
            
-           // Optional: Show nature color indicator or text
-           // Text(settings.getString(current.nature?.toLowerCase() ?? '') ?? current.nature ?? '',
-           //     style: TextStyle(color: (current.nature?.toLowerCase() == 'good' || current.nature?.toLowerCase() == 'shubh') ? Colors.green : Colors.red, fontSize: 12)),
-               
            const SizedBox(height: 8),
            Text('${PanchangUtils.formatTime(current.startTime)} - ${PanchangUtils.formatTime(current.endTime)}', 
-             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: const Color(0xFF8B0000))),
+             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: timeColor)),
         ],
       )
     );
@@ -386,6 +400,8 @@ class PanchangView extends StatelessWidget {
 
   Widget _buildPanchangBadge(BuildContext context, String title, List<PanchangElement>? elements) {
     final settings = context.read<SettingsProvider>();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subheadingColor = isDark ? Theme.of(context).primaryColor : const Color(0xFF8B0000);
     
     List<Widget> content = [];
     if (elements == null || elements.isEmpty) {
@@ -407,7 +423,7 @@ class PanchangView extends StatelessWidget {
         
         if (el.endTime != null) {
            content.add(Text('${settings.getString('ends')}: ${PanchangUtils.formatTime(el.endTime)}', 
-             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF8B0000))));
+             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: subheadingColor)));
         }
       }
     }
@@ -453,11 +469,14 @@ class PanchangView extends StatelessWidget {
   }
 
   Widget _buildTimeItem(BuildContext context, IconData icon, String label, String? time) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final subheadingColor = isDark ? Theme.of(context).primaryColor.withOpacity(0.9) : const Color(0xFF8B0000);
+    
     return Column(
       children: [
         Icon(icon, color: Theme.of(context).primaryColor),
         const SizedBox(height: 4),
-        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF8B0000))),
+        Text(label, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: subheadingColor)),
         Text(time ?? '--:--', style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold)),
       ],
     );

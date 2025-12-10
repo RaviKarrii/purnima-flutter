@@ -19,11 +19,15 @@ class VedicCard extends StatelessWidget {
     return Container(
       margin: margin ?? const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: backgroundColor ?? const Color(0xFFFFF8E1), // Light cream background for the badge
+        color: backgroundColor ?? (Theme.of(context).brightness == Brightness.dark 
+            ? const Color(0xFF1E1E1E) 
+            : const Color(0xFFFFF8E1)), 
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withAlpha(20),
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.black.withOpacity(0.3) 
+                : Colors.orange.withAlpha(20),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -31,12 +35,9 @@ class VedicCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Container(
-          // Removed the top border decoration
-          child: Padding(
-            padding: padding ?? const EdgeInsets.all(16.0),
-            child: child,
-          ),
+        child: Padding(
+          padding: padding ?? const EdgeInsets.all(16.0),
+          child: child,
         ),
       ),
     );

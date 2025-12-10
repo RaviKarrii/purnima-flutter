@@ -76,11 +76,17 @@ class PurnimaApp extends StatelessWidget {
            ),
         ),
       ],
-      child: MaterialApp(
-        title: 'Purnima',
-        theme: AppTheme.lightTheme,
-        home: const SplashScreen(),
-        debugShowCheckedModeBanner: false,
+      child: Consumer<SettingsProvider>(
+        builder: (context, settings, _) {
+          return MaterialApp(
+            title: 'Purnima',
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: settings.themeMode,
+            home: const SplashScreen(),
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }

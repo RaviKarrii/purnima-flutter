@@ -120,21 +120,78 @@ class ChartContent extends StatelessWidget {
                             const SizedBox(height: 24),
                             Text(settings.getString('details'), style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
                             const SizedBox(height: 16),
-                            ...chart.planetaryPositions!.map((planet) => 
-                              VedicCard(
+                            ...chart.planetaryPositions!.map((planet) {
+                              final degree = planet.degreeInRashi ?? 0;
+                              final d = degree.floor();
+                              final m = ((degree - d) * 60).floor();
+                              final degStr = '$d° $m\'';
+                              final isRetro = planet.retrograde == true;
+                              
+                              return VedicCard(
                                 margin: const EdgeInsets.only(bottom: 8),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
                                   child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: [
-                                      Text(planet.planetName ?? settings.getString('unknown'), style: const TextStyle(fontWeight: FontWeight.bold)),
-                                      Text('${settings.getString('house')} ${planet.houseNumber}'),
+                                       Container(
+                                         width: 40,
+                                         height: 40,
+                                         decoration: BoxDecoration(
+                                           color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                           shape: BoxShape.circle,
+                                         ),
+                                         alignment: Alignment.center,
+                                         child: Text(
+                                           planet.planetName?.substring(0, 2) ?? '??',
+                                           style: TextStyle(
+                                             fontWeight: FontWeight.bold, 
+                                             color: Theme.of(context).primaryColor
+                                           ),
+                                         ),
+                                       ),
+                                       const SizedBox(width: 16),
+                                       Expanded(
+                                         child: Column(
+                                           crossAxisAlignment: CrossAxisAlignment.start,
+                                           children: [
+                                             Row(
+                                               children: [
+                                                 Text(
+                                                   planet.planetName ?? settings.getString('unknown'), 
+                                                   style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)
+                                                 ),
+                                                 if (isRetro)
+                                                   Container(
+                                                     margin: const EdgeInsets.only(left: 8),
+                                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                     decoration: BoxDecoration(
+                                                       color: Theme.of(context).colorScheme.error,
+                                                       borderRadius: BorderRadius.circular(4),
+                                                     ),
+                                                     child: Text('R', style: TextStyle(color: Theme.of(context).colorScheme.onError, fontSize: 10, fontWeight: FontWeight.bold)),
+                                                   ),
+                                               ],
+                                             ),
+                                             const SizedBox(height: 4),
+                                             Row(
+                                               children: [
+                                                 Text('${settings.getString('house')} ${planet.houseNumber}'),
+                                                 const SizedBox(width: 8),
+                                                 const Text('•', style: TextStyle(color: Colors.grey)),
+                                                 const SizedBox(width: 8),
+                                                 Text(planet.rashiName ?? ''),
+                                               ],
+                                             ),
+                                           ],
+                                         ),
+                                       ),
+                                       Text(degStr, style: const TextStyle(fontWeight: FontWeight.bold, fontFamily: 'Monospace')),
                                     ],
                                   ),
                                 ),
-                              )
-                            ),
+                              );
+                            }),
                           ],
                         ),
                       ),
