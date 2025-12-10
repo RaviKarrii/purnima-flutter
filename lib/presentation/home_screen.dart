@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/panchang_provider.dart';
 import 'chart/chart_input_screen.dart';
 import 'package:app/core/utils.dart';
+import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import 'widgets/vedic_background.dart';
 import 'widgets/vedic_card.dart';
@@ -340,6 +341,13 @@ class PanchangView extends StatelessWidget {
     }
 
     if (current == null) return const SizedBox();
+
+    // Update Home Widget
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      HomeWidget.saveWidgetData<String>('choghadiya_name', current!.name ?? '');
+      HomeWidget.saveWidgetData<String>('choghadiya_time', '${PanchangUtils.formatTime(current.startTime)} - ${PanchangUtils.formatTime(current.endTime)}');
+      HomeWidget.updateWidget(name: 'ChoghadiyaWidgetProvider', androidName: 'ChoghadiyaWidgetProvider');
+    });
 
     Color? choghadiyaColor;
     if (current.color != null) {

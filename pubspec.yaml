@@ -41,6 +41,7 @@ dependencies:
   flutter_svg: ^2.2.3
   geolocator: ^14.0.2
   shared_preferences: ^2.5.3
+  home_widget: ^0.8.1
 
 dev_dependencies:
   flutter_test:
