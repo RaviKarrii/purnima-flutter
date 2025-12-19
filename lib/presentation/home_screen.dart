@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'providers/panchang_provider.dart';
 import 'chart/chart_input_screen.dart';
 import 'package:app/core/utils.dart';
+import 'dart:convert';
 import 'package:home_widget/home_widget.dart';
 import 'package:intl/intl.dart';
 import 'widgets/vedic_background.dart';
@@ -346,6 +347,16 @@ class PanchangView extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       HomeWidget.saveWidgetData<String>('choghadiya_name', current!.name ?? '');
       HomeWidget.saveWidgetData<String>('choghadiya_time', '${PanchangUtils.formatTime(current.startTime)} - ${PanchangUtils.formatTime(current.endTime)}');
+      
+      // Save Full Schedule for Background Updates
+      final schedule = all.map((c) => {
+        'start': c.startTime, 
+        'end': c.endTime,
+        'name': c.name,
+        'color': c.color
+      }).toList();
+      HomeWidget.saveWidgetData<String>('choghadiya_schedule', jsonEncode(schedule));
+
       HomeWidget.updateWidget(name: 'ChoghadiyaWidgetProvider', androidName: 'ChoghadiyaWidgetProvider');
     });
 

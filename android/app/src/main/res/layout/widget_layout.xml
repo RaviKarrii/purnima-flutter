@@ -8,15 +8,30 @@
     android:gravity="center"
     android:theme="@android:style/Theme.DeviceDefault.Light">
 
-    <TextView
-        android:id="@+id/widget_title"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:text="Choghadiya"
-        android:textColor="#8B0000"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/widget_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Choghadiya"
+            android:textColor="#8B0000"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/widget_refresh_btn"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_refresh"
+            android:contentDescription="Refresh" />
+    </RelativeLayout>
 
     <TextView
         android:id="@+id/widget_current_name"
