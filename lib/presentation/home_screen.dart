@@ -525,9 +525,45 @@ class PanchangView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        Text(
-          dateStr,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.grey[700]),
+        GestureDetector(
+          onTap: () async {
+            final provider = context.read<PanchangProvider>();
+            final initialDate = provider.selectedDate;
+            final picked = await showDatePicker(
+              context: context,
+              initialDate: initialDate,
+              firstDate: DateTime(1900),
+              lastDate: DateTime(2100),
+              builder: (context, child) {
+                return Theme(
+                  data: Theme.of(context).copyWith(
+                    colorScheme: ColorScheme.light(
+                      primary: Theme.of(context).primaryColor,
+                    ),
+                  ),
+                  child: child!,
+                );
+              },
+            );
+            if (picked != null) {
+              provider.setDate(picked);
+              context.read<MuhurtaProvider>().setDate(picked);
+            }
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                dateStr,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(Icons.calendar_today, size: 16, color: Theme.of(context).primaryColor),
+            ],
+          ),
         ),
         const SizedBox(height: 8),
         GestureDetector(

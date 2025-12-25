@@ -36,6 +36,16 @@ class MuhurtaProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // Date state
+  DateTime _selectedDate = DateTime.now();
+
+  Future<void> setDate(DateTime date) async {
+    _selectedDate = date;
+    if (_lastLat != null && _lastLng != null) {
+      await loadMuhurta(_lastLat!, _lastLng!);
+    }
+  }
+
   Future<void> loadMuhurta(double lat, double lng) async {
     _isLoading = true;
     _error = null;
@@ -44,7 +54,7 @@ class MuhurtaProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final date = DateFormat('yyyy-MM-dd').format(_selectedDate);
       
       // Get timezone offset
       final now = DateTime.now();

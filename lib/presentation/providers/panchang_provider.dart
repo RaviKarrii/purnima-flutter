@@ -55,6 +55,16 @@ class PanchangProvider with ChangeNotifier {
     await loadPanchang();
   }
 
+  // Date state
+  DateTime _selectedDate = DateTime.now();
+
+  DateTime get selectedDate => _selectedDate;
+
+  Future<void> setDate(DateTime date) async {
+    _selectedDate = date;
+    await loadPanchang();
+  }
+
   Future<void> loadPanchang() async {
     _isLoading = true;
     _error = null;
@@ -99,7 +109,7 @@ class PanchangProvider with ChangeNotifier {
         place = nearest != null ? 'Near ${nearest.name}' : 'Current Location';
       }
 
-      final date = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      final date = DateFormat('yyyy-MM-dd').format(_selectedDate);
       
       // Get timezone offset in +HH:mm or -HH:mm format
       final now = DateTime.now();

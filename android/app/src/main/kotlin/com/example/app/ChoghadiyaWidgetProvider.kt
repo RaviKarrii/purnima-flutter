@@ -30,6 +30,20 @@ class ChoghadiyaWidgetProvider : HomeWidgetProvider() {
                 )
                 setOnClickPendingIntent(R.id.widget_refresh_btn, pendingIntent)
 
+                // 2. Setup Open App Intent
+                val launchIntent = Intent(context, MainActivity::class.java).apply {
+                    action = Intent.ACTION_MAIN
+                    addCategory(Intent.CATEGORY_LAUNCHER)
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+                }
+                val launchPendingIntent = PendingIntent.getActivity(
+                    context, 
+                    widgetId, 
+                    launchIntent, 
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+                )
+                setOnClickPendingIntent(R.id.widget_root, launchPendingIntent)
+
                 // 2. Try to calculate current data from Schedule
                 var foundCurrent = false
                 val scheduleJson = widgetData.getString("choghadiya_schedule", null)
